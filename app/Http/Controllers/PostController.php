@@ -8,9 +8,11 @@
  */
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Post\StoreRequest;
+use App\Http\Requests\Post\UpdateRequest;
 use App\Models\Post;
-use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class PostController extends Controller
@@ -18,10 +20,10 @@ class PostController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         return response()->json([
-            'data' => Post::all(),
+            'data' => Post::paginate($request->get('size', 10)),
             'code' => 200
         ]);
     }
@@ -29,12 +31,13 @@ class PostController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreRequest $request)
     {
-        $post = Post::create($request->all());
+        Post::create($request->all());
 
         return response([
-            'data' => $post,
+            'data' => $request->all(),
+            'message' => 'Post created successfully',
             'code' => 201
         ], 201);
     }
@@ -46,6 +49,7 @@ class PostController extends Controller
     {
         try {
             $post = Post::findOrFail($id);
+            $post->printTimestampsToLog();
             return response()->json([
                 'data' => $post,
                 'code' => 200
@@ -62,9 +66,15 @@ class PostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Post $post)
+    public function update(UpdateRequest $request, Post $post)
     {
-        //
+        $post->update($request->all());
+
+        return response([
+            'data' => $post,
+            'message' => 'Post updated successfully',
+            'code' => 202
+        ], 202);
     }
 
     /**
@@ -72,6 +82,12 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        //
+        $post->delete();
+
+        return response([
+            'data' => [],
+            'message' => 'Post deleted successfully',
+            'code' => 203
+        ], 203);
     }
 }
